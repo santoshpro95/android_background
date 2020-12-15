@@ -3,6 +3,9 @@
     package="com.salesforcedrillers.myapplication">
 
 
+    <!-- To request foreground location access, declare one of these permissions. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <!--foreground service permission-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!--end less running service-->
@@ -20,6 +23,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:fullBackupOnly="false"
+        android:fullBackupContent="false"
         android:theme="@style/AppTheme">
 
         <activity android:name=".MainActivity">
@@ -30,13 +35,17 @@
             </intent-filter>
         </activity>
 
-        <!-- Declare the service class -->
+
+        <!-- Declare the foreground service class -->
         <service android:name=".DemoService"
             android:enabled="true"
             android:stopWithTask="false"
+            android:foregroundServiceType="location"
             android:exported="false"/>
+        <!-- Declare the foreground service class -->
 
-        <!-- Declare the broadcast class to start automatically on restart app-->
+
+        <!-- Declare the broadcast class to start automatically on restart phone-->
         <receiver android:enabled="true"
             android:name=".StartReceiver"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
@@ -45,6 +54,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </receiver>
+        <!-- Declare the broadcast class to start automatically on restart phone-->
 
 
 

@@ -1,5 +1,7 @@
 package com.salesforcedrillers.myapplication;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -7,6 +9,10 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Build;
@@ -15,15 +21,24 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+
+import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
 
-public class DemoService extends Service {
+public class DemoService extends Service implements LocationListener {
 
     private static final int NOTIF_ID = 123;
+    Timer timer = new Timer();
+    protected LocationManager locationManager;
+    protected LocationListener locationListener;
     private MediaPlayer player;
 
     @Nullable
@@ -34,7 +49,14 @@ public class DemoService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting" + startId, Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+
+        // location
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
+        }
 
         //getting systems default ringtone
         player = MediaPlayer.create(this,
@@ -45,7 +67,23 @@ public class DemoService extends Service {
         //staring the player
         player.start();
 
+
+        // check in console
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Log.i("current Time", String.valueOf(Calendar.getInstance().getTime()));
+            }
+        }, 0, 1000);
+
         return Service.START_STICKY;
+    }
+
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        Log.d("Latitude", String.valueOf(location.getLatitude()));
+        Log.d("Longitude", String.valueOf(location.getLongitude()));
     }
 
     @Override
@@ -57,8 +95,6 @@ public class DemoService extends Service {
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setPriority(PRIORITY_MIN)
                 .setSubText("Running")
-                .setTicker("background")
-                .setContentInfo("Music")
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .build();
 
@@ -80,6 +116,7 @@ public class DemoService extends Service {
 
     @Override
     public void onDestroy() {
+        timer.cancel();
         Toast.makeText(this, "Service stopped", Toast.LENGTH_LONG).show();
         player.stop();
         super.onDestroy();
@@ -87,15 +124,11 @@ public class DemoService extends Service {
 
     @Override
     public void onLowMemory() {
-
-
         super.onLowMemory();
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-
-
         super.onTaskRemoved(rootIntent);
     }
 }
